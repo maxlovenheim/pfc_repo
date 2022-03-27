@@ -29,7 +29,6 @@ public class IbanService {
 
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                System.out.println(line);
                 String[] ccArr = line.split(";");
                 HashMap<String, Integer> lengthMap = new HashMap<>();
                 lengthMap.put("length", Integer.parseInt(ccArr[1]));
