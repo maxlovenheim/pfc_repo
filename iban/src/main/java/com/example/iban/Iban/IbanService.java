@@ -8,15 +8,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Scanner;
+import java.math.BigInteger;
+import java.util.*;
 
 @Service
 public class IbanService {
     private HashMap<String, HashMap<String, Integer>> countryCodes = new HashMap<>();
-    private HashMap<String, Integer> ibanLetterTranslation = new HashMap<>();
+    private HashMap<String, String> ibanLetterTranslation = new HashMap<>();
 
     public IbanService() throws FileNotFoundException {
         setCountryCodes();
@@ -51,18 +49,33 @@ public class IbanService {
                                         "V", "W","X", "Y", "Z");
         int index = 0;
         for (String letter : letters) {
-            this.ibanLetterTranslation.put(letter, index+10);
+            this.ibanLetterTranslation.put(letter, String.valueOf(index+10));
             index++;
         }
     }
 
-    public long convertIbanToLong(String iban) {
-        StringBuffer ibanBuffer = new StringBuffer(iban);
-        ibanBuffer.append(ibanBuffer.substring(0,4));
-        ibanBuffer.replace(0 ,4 ,"");
-        return 0;
-    }
+    public BigInteger convertIbanToInteger(String iban) {
+        StringBuilder ibanBuilder = new StringBuilder(iban);
+        ibanBuilder.append(ibanBuilder.substring(0,4));
+        ibanBuilder.replace(0 ,4 ,"");
+        String ibanString = "";
+        for (int i = 0; i < ibanBuilder.length(); i++) {
+            if (this.ibanLetterTranslation.get(String.valueOf(ibanBuilder.charAt(i))) != null) {
+                ibanString += this.ibanLetterTranslation.get(String.valueOf(ibanBuilder.charAt(i)));
+            } else {
+                ibanString+= String.valueOf(ibanBuilder.charAt(i));
+            }
+        }
+        try {
+            BigInteger result = new BigInteger(ibanString);
+            return result;
+        } catch (Exception e) {
+            System.out.println("Couldn't convert iban to biginteger. Bad format!");
+            System.out.println(e);
+            return new BigInteger("0");
+        }
 
+    }
 
     public boolean ibanIsValid(String iban) {
         if (iban == null) {
@@ -73,9 +86,9 @@ public class IbanService {
         if (this.countryCodes.get(countryCode) != null) {
             // Check correct length per country
             if (iban.length() == this.countryCodes.get(countryCode).get("length")) {
-                long ibanAsLong = convertIbanToLong(iban);
+                BigInteger ibanAsInteger = convertIbanToInteger(iban);
                 //Run mod 97 test to validate iban
-                if (ibanAsLong % 97 == 1) {
+                if (ibanAsInteger.mod(new BigInteger("97")).equals(new BigInteger("1"))) {
                     return true;
                 } else {
                     return false;
