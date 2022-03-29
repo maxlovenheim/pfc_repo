@@ -1,7 +1,9 @@
 package com.example.iban.Iban;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -16,29 +18,36 @@ public class IbanService {
     private HashMap<String, HashMap<String, Integer>> countryCodes = new HashMap<>();
     private HashMap<String, String> ibanLetterTranslation = new HashMap<>();
 
-    public IbanService() throws FileNotFoundException {
+    public IbanService() throws IOException {
         setCountryCodes();
         setIbanLetterTranslation();
     }
 
-    public void setCountryCodes() {
+    public void setCountryCodes() throws IOException {
+
+        Resource resource = new ClassPathResource("iban_codes_length.csv");
+
+        InputStream input = resource.getInputStream();
+
         String resourceName = "iban_codes_length.csv";
         ClassLoader classLoader = getClass().getClassLoader();
 
-        try (Scanner scanner = new Scanner(new File(classLoader.getResource(resourceName).getFile()))) {
+        try (Scanner scanner = new Scanner(classLoader.getResourceAsStream(resourceName)).useDelimiter("\n")) {
 
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] ccArr = line.split(";");
-                HashMap<String, Integer> lengthMap = new HashMap<>();
+                HashMap<String,Integer> lengthMap = new HashMap<String, Integer>();
                 lengthMap.put("length", Integer.parseInt(ccArr[1]));
                 countryCodes.put(ccArr[0], lengthMap);
             }
             System.out.println("Finished loading csv resource");
-        } catch (FileNotFoundException e) {
-            System.out.println("Couldn't find required resource");
+        }  catch (Exception e) {
+            System.out.println("Couldn't read required resource");
             System.out.println(e);
         }
+
+
     }
 
     public void setIbanLetterTranslation() {
